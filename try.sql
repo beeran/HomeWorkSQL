@@ -5,12 +5,15 @@ SELECT
     first_name, last_name
 FROM
     actor;
-    
+
 # 1b
-SELECT 
-    CONCAT(first_name, last_name) AS 'Actor Name'
-FROM
-    actor;
+select concat(first_name, " ", last_name) as 'Actor Name'
+from actor;
+
+#SELECT 
+#    CONCAT(CONCAT(first_name, " "), last_name) AS 'Actor Name'
+#FROM
+#    actor;
     
 # 2a
 SELECT 
@@ -87,7 +90,6 @@ FROM
     actor
 WHERE
     first_name = 'HARPO';
-#since there's only one HARPO, no need to care about the last name.
     
 UPDATE actor 
 SET 
@@ -95,10 +97,17 @@ SET
 WHERE
     first_name = 'HARPO';
 
+#To verify the result:
+SELECT 
+    *
+FROM
+    actor
+WHERE
+    first_name = 'GROUCHO';   
     
 # 5a
-drop table if exists address;
-CREATE TABLE address;
+show create table address;
+#describe address;
 
 # 6a
 SELECT 
@@ -192,18 +201,136 @@ WHERE
                     title = 'Alone Trip'))
                     
 # 7c
+SELECT 
+    c.first_name, c.last_name, c.email
+FROM
+    customer AS c
+        INNER JOIN
+    address USING (address_id)
+        INNER JOIN
+    city USING (city_id)
+        INNER JOIN
+    country USING (country_id)
+WHERE
+    country.country = 'Canada';
+/*
 
-select city_id
-from city
-where city_id in(
-	select country_id
-    from country
-    where country = 'Canada'
-    )
-select * from country;
-select * from customer;
-select * from city;
-select * from address;
-select * from film;
-select * from actor;
-select * from film_actor;
+SELECT 
+    first_name, last_name, email
+FROM
+    customer
+WHERE
+    address_id IN (SELECT 
+            address_id
+        FROM
+            address
+        WHERE
+            city_id IN (SELECT 
+                    city_id
+                FROM
+                    city
+                WHERE
+                    country_id IN (SELECT 
+                            country_id
+                        FROM
+                            country
+                        WHERE
+                            country = 'Canada')));
+*/
+
+# 7d
+SELECT 
+    title AS 'Family Movies'
+FROM
+    film
+WHERE
+    film_id IN (SELECT 
+            film_id
+        FROM
+            film_category
+        WHERE
+            category_id IN (SELECT 
+                    category_id
+                FROM
+                    category
+                WHERE
+                    name = 'Family'));
+                    
+# 7e 
+SELECT 
+    f.title, COUNT(i.film_id) AS 'Rental Count'
+FROM
+    film AS f
+        INNER JOIN
+    inventory AS i USING (film_id)
+        INNER JOIN
+    rental USING (inventory_id)
+GROUP BY f.title
+ORDER BY COUNT(i.film_id) DESC;
+
+# 7f
+SELECT 
+    s.store_id, SUM(p.amount) AS 'Total Amount'
+FROM
+    payment AS p
+        INNER JOIN
+    staff AS s USING (staff_id)
+GROUP BY p.staff_id;                    
+
+# 7g
+SELECT 
+    s.store_id, c.city, country.country
+FROM
+    store AS s
+        INNER JOIN
+    address AS a USING (address_id)
+        INNER JOIN
+    city AS c USING (city_id)
+        INNER JOIN
+    country USING (country_id);
+    
+# 7h
+SELECT 
+    c.name AS 'Top Five Genres',
+    SUM(p.amount) AS 'Gross Revenue'
+FROM
+    category AS c
+        CROSS JOIN
+    film_category USING (category_id)
+        INNER JOIN
+    inventory USING (film_id)
+        INNER JOIN
+    rental USING (inventory_id)
+        INNER JOIN
+    payment AS p USING (rental_id)
+GROUP BY c.name
+ORDER BY SUM(p.amount) DESC
+LIMIT 5;
+
+#8a
+CREATE VIEW Top_Five_Gernes AS
+    SELECT 
+        c.name AS 'Top Five Genres',
+        SUM(p.amount) AS 'Gross Revenue'
+    FROM
+        category AS c
+            CROSS JOIN
+        film_category USING (category_id)
+            INNER JOIN
+        inventory USING (film_id)
+            INNER JOIN
+        rental USING (inventory_id)
+            INNER JOIN
+        payment AS p USING (rental_id)
+    GROUP BY c.name
+    ORDER BY SUM(p.amount) DESC
+    LIMIT 5;
+ 
+# 8b
+select * from Top_Five_Gernes;
+
+# 8c
+drop view Top_Five_Gernes;
+
+
+
